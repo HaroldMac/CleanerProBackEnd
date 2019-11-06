@@ -1,12 +1,10 @@
 package com.cleanerPro.CleanerPro.controller;
 
-import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,13 +13,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.cleanerPro.CleanerPro.model.Cleaner;
 import com.cleanerPro.CleanerPro.model.Client;
+import com.cleanerPro.CleanerPro.model.ScheduledCleaning;
 import com.cleanerPro.CleanerPro.repository.CleanerRepository;
 import com.cleanerPro.CleanerPro.repository.ClientRepository;
 import com.cleanerPro.CleanerPro.repository.ScheduledCleaningRepository;
+import com.cleanerPro.CleanerPro.service.EmailService;
 
 
 
 @RestController
+@CrossOrigin
 public class RootRestController {
 	
 	@Autowired
@@ -33,11 +34,9 @@ public class RootRestController {
 	@Autowired
 	private ScheduledCleaningRepository scheduledCleaningRepository;
 	
+	@Autowired
+	private EmailService emailService;
 	
-	@PostMapping("/api/addScheduledCleaning")
-	public void addScheduledCleaningByCleanerId(@RequestParam(name="cleanerId") String cleanertId){
-		System.out.println("Trying to add a cleaning here");
-	}
 	
 	/*
 	 * Need to add
@@ -45,8 +44,8 @@ public class RootRestController {
 	 *       a way to retrieve or change a lost password and send a link via email for changing your email
 	 * 
 	 * done! a way to create, read, update and delete a client
-	 *       a way to create, read, update and delete a scheduled appointment
-	 *       a way to send a "i'm about to clean your place" and a "i'm done cleaning your place" email **note** maybe make a html version of this email
+	 * done! a way to create, read, update and delete a scheduled appointment
+	 * done! a way to send a "i'm about to clean your place" and a "i'm done cleaning your place" email **note** maybe make a html version of this email
 	 *   
 	 */
 	
@@ -63,10 +62,9 @@ public class RootRestController {
 	}
 	
 	@GetMapping("/api/cleaner/getCleaner")
-	public Cleaner getCleanerById(@RequestParam(name="cleanerId") String cleanerId){
+	public Cleaner getCleanerById(@RequestParam(name="cleanerId") Long cleanerId){
 		System.out.println("Getting a cleaner by id: " + cleanerId);
-		Cleaner cleaner = new Cleaner();
-		return cleaner;
+		return cleanerRepository.getOne(cleanerId);
 	}
 	
 	@PostMapping("/api/cleaner/update")
@@ -82,7 +80,7 @@ public class RootRestController {
 		System.out.println("Deleting a cleaner: " + cleaner.getNameFirst());
 		cleanerRepository.delete(cleaner);;
 	}
-	
+		
 	//Client crud
 	
 	@PostMapping("/api/client/create")
@@ -96,18 +94,14 @@ public class RootRestController {
 	
 	@GetMapping("/api/client/getClient")
 	public Client getClientById(@RequestParam(name="clientId") Long clientId){
-		Client client = new Client();
-		return client;
+		System.out.println("Getting a client: " + clientId);
+		return clientRepository.getOne(clientId);
 	}
 	
 	@GetMapping("/api/client/getAllClients")
 	public List<Client> getClientByCleanerId(@RequestParam(name="cleanerId") Long cleanerId){
-		Client client1 = new Client();
-		Client client2 = new Client();
-		List<Client> clients = new ArrayList<Client>();
-		clients.add(client1);
-		clients.add(client2);
-		return clients;
+		System.out.println("Getting all clients");
+		return clientRepository.findAll();
 	}
 	
 	@PostMapping("/api/client/update")
@@ -123,6 +117,60 @@ public class RootRestController {
 		clientRepository.delete(client);
 	}
 	
+	//Scheduled Cleaning CRUD
+	
+	@PostMapping("/api/ScheduledCleaning/create")
+	public void createScheduledCleaning(@RequestParam(name="cleanerId") Long cleanerId, @RequestParam(name="clientId") Long clientId, ScheduledCleaning scheduledCleaning){
+		System.out.println("Creating a client: " + scheduledCleaning.getId());		
+		scheduledCleaning.setCleanerId(cleanerId);
+		scheduledCleaning.setClientId(clientId);
+		scheduledCleaningRepository.save(scheduledCleaning);
+	}
+	
+	@GetMapping("/api/ScheduledCleaning/getScheduledCleaning")
+	public ScheduledCleaning getScheduledCleaningById(@RequestParam(name="scheduledCleaningId") Long scheduledCleaningId){
+		System.out.println("Get a scheduled cleaning: " + scheduledCleaningId);
+		return scheduledCleaningRepository.getOne(scheduledCleaningId);
+		
+	}
+	
+	@GetMapping("/api/ScheduledCleaning/getAllScheduledCleanings")
+	public List<ScheduledCleaning> getAllScheduledCleaningsByCleanerId(@RequestParam(name="cleanerId") Long cleanerId){
+		System.out.println("Get all scheduled cleanings");
+		return scheduledCleaningRepository.findAll();
+		
+	}
+	
+	@PostMapping("/api/ScheduledCleaning/update")
+	public void updateScheduledCleaning(@RequestBody ScheduledCleaning scheduledCleaning){
+		System.out.println("Updating a client: " + scheduledCleaning.getId());
+		scheduledCleaningRepository.save(scheduledCleaning);
+	}
+	
+	
+	@PostMapping("/api/ScheduledCleaning/deleteAccount")
+	public void deleteScheduledCleaning(@RequestBody ScheduledCleaning scheduledCleaning){
+		System.out.println("Deleting a cleaner: " + scheduledCleaning.getId());
+		scheduledCleaningRepository.delete(scheduledCleaning);
+	}
+	
+	//Send Scheduled Cleaning notification email
+	@PostMapping("/api/ScheduledCleaning/sendScheduledCleaningNotification")
+	public void sendScheduledCleaningNotification(ScheduledCleaning scheduledCleaning){
+		System.out.println("Sending scheduled cleaning notification: " + scheduledCleaning.getId());
+		Cleaner cleaner = cleanerRepository.getOne(scheduledCleaning.getCleanerId());
+		Client client = clientRepository.getOne(scheduledCleaning.getClientId());
+		emailService.sendAppointmentBooked(cleaner, client, scheduledCleaning);
+	}
+	
+	//Send Scheduled Cleaning completed notification email
+	@PostMapping("/api/ScheduledCleaning/sendScheduledCleaningCompleteNotification")
+	public void sendScheduledCleaningCompleteNotification(ScheduledCleaning scheduledCleaning){
+		System.out.println("Sending scheduled cleaning notification: " + scheduledCleaning.getId());
+		Cleaner cleaner = cleanerRepository.getOne(scheduledCleaning.getCleanerId());
+		Client client = clientRepository.getOne(scheduledCleaning.getClientId());
+		emailService.sendCleaningComplete(cleaner, client, scheduledCleaning);
+	}
 	
 
 }
