@@ -101,7 +101,9 @@ public class RootRestController {
 	@GetMapping("/api/client/getAllClients")
 	public List<Client> getClientByCleanerId(@RequestParam(name="cleanerId") Long cleanerId){
 		System.out.println("Getting all clients");
-		return clientRepository.findAll();
+		List<Client> clients = clientRepository.findAll();
+		clients.forEach(client -> client.setCleaner(null));
+		return clients;
 	}
 	
 	@PostMapping("/api/client/update")
@@ -137,7 +139,9 @@ public class RootRestController {
 	@GetMapping("/api/ScheduledCleaning/getAllScheduledCleanings")
 	public List<ScheduledCleaning> getAllScheduledCleaningsByCleanerId(@RequestParam(name="cleanerId") Long cleanerId){
 		System.out.println("Get all scheduled cleanings");
-		return scheduledCleaningRepository.findAll();
+		List<ScheduledCleaning> scheduledCleaning = scheduledCleaningRepository.findAll();
+		
+		return scheduledCleaning;
 		
 	}
 	
