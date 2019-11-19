@@ -4,11 +4,14 @@ import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cleanerPro.CleanerPro.model.Cleaner;
@@ -51,14 +54,26 @@ public class RootRestController {
 	
 	//crud for customer
 	
+	@GetMapping("/api/cleaner/signin")
+	public Cleaner signIn(@RequestParam(name="email") String email,@RequestParam(name="password") String pass){
+		System.out.println("signing a cleaner: " + email);
+		Cleaner cleaner = cleanerRepository.getOne(new Long(1));
+		cleaner.setClients(null);
+		return cleaner;
+	}
+	
 	
 	@PostMapping("/api/cleaner/signup")
-	public void signUp(@RequestParam(name="userName") String userName,@RequestParam(name="password") String pass, @RequestBody Cleaner cleaner){
-		System.out.println("Creating a cleaner: " + cleaner.getNameFirst());
+	//public ResponseEntity  signUp(@RequestParam(name="email") String email,@RequestParam(name="password") String pass){
+	public void signUp(@RequestParam(name="email") String email,@RequestParam(name="password") String pass){
+		System.out.println("Creating a cleaner: " + email);
+		Cleaner cleaner = new Cleaner();
+		cleaner.setEmailAddress(email);
 		Date now = new Date();
 		cleaner.setJoinDate(now);
 		cleaner.setClients(null);
-		cleanerRepository.save(cleaner);
+		//cleanerRepository.save(cleaner);
+		 //return new ResponseEntity<>("success", HttpStatus.OK);
 	}
 	
 	@GetMapping("/api/cleaner/getCleaner")
