@@ -8,7 +8,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
-@CrossOrigin
+
 @Entity
 public class Client {
 	

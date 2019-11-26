@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 
 import com.cleanerPro.CleanerPro.model.Cleaner;
 import com.cleanerPro.CleanerPro.model.Client;
+import com.cleanerPro.CleanerPro.model.PasswordToken;
 import com.cleanerPro.CleanerPro.model.ScheduledCleaning;
+import com.cleanerPro.CleanerPro.model.User;
 
 
 
@@ -83,6 +85,36 @@ public class EmailService {
 		helper.setText(body);
 		helper.setSubject(subject);
 		helper.setFrom("no-reply@hmps.ca");
+	}
+	
+	public void sendSignUpConfirmationEmail(PasswordToken token) {
+		String subject = "CleanerPro signup confirmation";
+		String link = "http://localhost:4200/confirmSignUp?email=" + token.getEmailAddress() + "&token=" + token.getToken();
+		
+		String body = "Click the link to confirm it was you. \n\n" + link;
+		FormVerificationService fvService = new FormVerificationService();
+		if (fvService.isValidEmail(token.getEmailAddress())) {
+			try {
+				this.send(token.getEmailAddress(), subject, body);
+			} catch (MessagingException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void sendForgottenPasswordEmail(PasswordToken token) {
+		String subject = "CleanerPro forgotten Password";
+		String link = "http://localhost:4200/ForgottenPassword?email="+ token.getEmailAddress() + "&token=" + token.getToken();
+		
+		String body = "Click the link to confirm it was you. \n\n" + link;
+		FormVerificationService fvService = new FormVerificationService();
+		if (fvService.isValidEmail(token.getEmailAddress())) {
+			try {
+				this.send(token.getEmailAddress(), subject, body);
+			} catch (MessagingException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 }
